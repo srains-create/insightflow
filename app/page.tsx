@@ -1,25 +1,80 @@
+"use client";
+
+import { useState } from "react";
+
 const signals = [
   {
+    id: "decision-flow",
     title: "Decision Flow",
     description:
       "Executive approval appears across several cross-functional decisions.",
-    evidence: "7 conversations",
+    evidenceCount: "7 conversations",
+    recurring: ["approval", "waiting", "decision", "leadership"],
+    evidence: [
+      {
+        person: "Engineering Lead",
+        quote:
+          "Even relatively small decisions sometimes move upward before we can act.",
+      },
+      {
+        person: "Product Director",
+        quote:
+          "There are situations where everyone agrees, but we still wait for executive confirmation.",
+      },
+    ],
   },
   {
+    id: "product-sales",
     title: "Product ↔ Sales",
     description:
       "Communication friction appears repeatedly between Product and Sales.",
-    evidence: "6 conversations",
+    evidenceCount: "6 conversations",
+    recurring: ["handoff", "priorities", "customer", "late", "context", "planning"],
+    evidence: [
+      {
+        person: "VP of Sales",
+        quote:
+          "We often hear something from customers that Product doesn't learn about until planning has already started.",
+      },
+      {
+        person: "Product Manager",
+        quote:
+          "Priorities sometimes arrive without the customer context behind them.",
+      },
+      {
+        person: "Sales Director",
+        quote:
+          "We aren't always sure what happened after feedback was passed along.",
+      },
+    ],
   },
   {
+    id: "customer-feedback",
     title: "Customer Feedback",
     description:
       "Customer information may be losing context as it moves through the organization.",
-    evidence: "4 conversations",
+    evidenceCount: "4 conversations",
+    recurring: ["feedback", "context", "customer", "handoff"],
+    evidence: [
+      {
+        person: "Customer Success Lead",
+        quote:
+          "We collect a lot of useful feedback, but it isn't always clear where it goes next.",
+      },
+      {
+        person: "Marketing Lead",
+        quote:
+          "Different teams sometimes walk away with different interpretations of the same customer feedback.",
+      },
+    ],
   },
 ];
 
 export default function Home() {
+  const [selectedSignal, setSelectedSignal] = useState<
+    (typeof signals)[number] | null
+  >(null);
+
   return (
     <main className="min-h-screen bg-[#f7f8f6] text-[#18201c]">
       {/* Navigation */}
@@ -190,50 +245,125 @@ export default function Home() {
           </div>
 
           {/* Signals panel */}
-          <aside className="bg-[#fcfcfb] p-7">
-            <div className="mb-6">
-              <p className="text-xs font-medium uppercase tracking-[0.16em] text-black/35">
-                System Signals
-              </p>
+            <aside className="bg-[#fcfcfb] p-7">
+              {selectedSignal ? (
+                <div>
+                  <button
+                    onClick={() => setSelectedSignal(null)}
+                    className="mb-6 text-xs font-medium text-black/40 transition hover:text-black"
+                  >
+                    ← All system signals
+                  </button>
 
-              <h3 className="mt-2 text-xl font-medium">
-                3 patterns may warrant exploration
-              </h3>
+                  <p className="text-xs font-medium uppercase tracking-[0.16em] text-black/35">
+                    Relationship Signal
+                  </p>
 
-              <p className="mt-2 text-sm leading-6 text-black/45">
-                Signals are observations for investigation, not conclusions.
-              </p>
-            </div>
+                  <h3 className="mt-2 text-2xl font-medium">
+                    {selectedSignal.title}
+                  </h3>
 
-            <div className="space-y-3">
-              {signals.map((signal, index) => (
-                <button
-                  key={signal.title}
-                  className="group w-full rounded-2xl border border-black/8 bg-white p-4 text-left transition hover:border-black/20 hover:shadow-sm"
-                >
-                  <div className="mb-3 flex items-center justify-between">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#eef1ed] text-xs font-medium">
-                      0{index + 1}
-                    </span>
+                  <p className="mt-3 text-sm leading-6 text-black/55">
+                    {selectedSignal.description}
+                  </p>
 
-                    <span className="text-[11px] text-black/35">
-                      {signal.evidence}
-                    </span>
+                  <div className="mt-5 rounded-xl bg-[#eef1ed] px-4 py-3">
+                    <p className="text-xs text-black/45">Evidence found across</p>
+                    <p className="mt-1 text-sm font-medium">
+                      {selectedSignal.evidenceCount}
+                    </p>
                   </div>
 
-                  <h4 className="text-sm font-medium">{signal.title}</h4>
+                  <div className="mt-7">
+                    <p className="text-xs font-medium uppercase tracking-[0.14em] text-black/35">
+                      Evidence
+                    </p>
 
-                  <p className="mt-1.5 text-xs leading-5 text-black/50">
-                    {signal.description}
-                  </p>
+                    <div className="mt-3 space-y-3">
+                      {selectedSignal.evidence.map((item) => (
+                        <div
+                          key={item.person}
+                          className="rounded-xl border border-black/8 bg-white p-4"
+                        >
+                          <p className="text-xs font-medium">{item.person}</p>
 
-                  <p className="mt-3 text-xs font-medium text-[#536b5a] opacity-0 transition group-hover:opacity-100">
-                    Explore evidence →
-                  </p>
-                </button>
-              ))}
-            </div>
-          </aside>
+                          <p className="mt-2 text-xs leading-5 text-black/50">
+                            “{item.quote}”
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-7">
+                    <p className="text-xs font-medium uppercase tracking-[0.14em] text-black/35">
+                      Recurring Language
+                    </p>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {selectedSignal.recurring.map((word) => (
+                        <span
+                          key={word}
+                          className="rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs text-black/50"
+                        >
+                          {word}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <button className="mt-8 w-full rounded-xl bg-[#18201c] px-5 py-3.5 text-sm font-medium text-white transition hover:opacity-85">
+                    Explore this pattern →
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="mb-6">
+                    <p className="text-xs font-medium uppercase tracking-[0.16em] text-black/35">
+                      System Signals
+                    </p>
+
+                    <h3 className="mt-2 text-xl font-medium">
+                      3 patterns may warrant exploration
+                    </h3>
+
+                    <p className="mt-2 text-sm leading-6 text-black/45">
+                      Signals are observations for investigation, not conclusions.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    {signals.map((signal, index) => (
+                      <button
+                        key={signal.id}
+                        onClick={() => setSelectedSignal(signal)}
+                        className="group w-full rounded-2xl border border-black/8 bg-white p-4 text-left transition hover:border-black/20 hover:shadow-sm"
+                      >
+                        <div className="mb-3 flex items-center justify-between">
+                          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#eef1ed] text-xs font-medium">
+                            0{index + 1}
+                          </span>
+
+                          <span className="text-[11px] text-black/35">
+                            {signal.evidenceCount}
+                          </span>
+                        </div>
+
+                        <h4 className="text-sm font-medium">{signal.title}</h4>
+
+                        <p className="mt-1.5 text-xs leading-5 text-black/50">
+                          {signal.description}
+                        </p>
+
+                        <p className="mt-3 text-xs font-medium text-[#536b5a] opacity-0 transition group-hover:opacity-100">
+                          Explore evidence →
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </aside>
         </section>
 
         {/* Inquiry bar */}
