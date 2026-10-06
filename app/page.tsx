@@ -75,6 +75,8 @@ export default function Home() {
     (typeof signals)[number] | null
   >(null);
 
+  const [inquiryMode, setInquiryMode] = useState(false);
+
   return (
     <main className="min-h-screen bg-[#f7f8f6] text-[#18201c]">
       {/* Navigation */}
@@ -280,10 +282,93 @@ export default function Home() {
 
           {/* Signals panel */}
             <aside className="bg-[#fcfcfb] p-7">
-              {selectedSignal ? (
+              {selectedSignal && inquiryMode ? (
                 <div>
                   <button
-                    onClick={() => setSelectedSignal(null)}
+                    onClick={() => setInquiryMode(false)}
+                    className="mb-6 text-xs font-medium text-black/40 transition hover:text-black"
+                  >
+                    ← Back to evidence
+                  </button>
+
+                  <p className="text-xs font-medium uppercase tracking-[0.16em] text-black/35">
+                    Inquiry Mode
+                  </p>
+
+                  <h3 className="mt-2 text-2xl font-medium">
+                    Explore the pattern
+                  </h3>
+
+                  <p className="mt-3 text-sm leading-6 text-black/55">
+                    Rather than treating this signal as a conclusion, explore what the
+                    evidence might reveal and what assumptions may be shaping the system.
+                  </p>
+
+                  <div className="mt-6 rounded-2xl border border-black/8 bg-white p-4">
+                    <p className="text-xs font-medium uppercase tracking-[0.12em] text-black/35">
+                      Selected Signal
+                    </p>
+
+                    <p className="mt-2 text-sm font-medium">
+                      {selectedSignal.title}
+                    </p>
+
+                    <p className="mt-1 text-xs leading-5 text-black/50">
+                      {selectedSignal.description}
+                    </p>
+                  </div>
+
+                  <div className="mt-7">
+                    <p className="text-xs font-medium uppercase tracking-[0.14em] text-black/35">
+                      Questions for Inquiry
+                    </p>
+
+                    <div className="mt-3 space-y-3">
+                      {[
+                        "What assumptions might be shaping this relationship?",
+                        "Where might information be losing context as it moves through the system?",
+                        "What evidence would challenge our current interpretation?",
+                        "Whose perspective might be missing from the evidence?",
+                        "What might become possible if this relationship changed?",
+                      ].map((question, index) => (
+                        <button
+                          key={question}
+                          className="group flex w-full items-start gap-3 rounded-xl border border-black/8 bg-white p-4 text-left transition hover:border-black/20 hover:shadow-sm"
+                        >
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#eef1ed] text-[10px] font-medium">
+                            {index + 1}
+                          </span>
+
+                          <span className="text-xs leading-5 text-black/60 group-hover:text-black">
+                            {question}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-7 rounded-2xl bg-[#eef1ed] p-4">
+                    <p className="text-xs font-medium uppercase tracking-[0.12em] text-black/35">
+                      Reflection
+                    </p>
+
+                    <textarea
+                      placeholder="Capture an observation, assumption, or question..."
+                      className="mt-3 min-h-24 w-full resize-none rounded-xl border border-black/8 bg-white p-3 text-xs leading-5 outline-none placeholder:text-black/30 focus:border-black/20"
+                    />
+                  </div>
+
+                  <button className="mt-5 w-full rounded-xl bg-[#18201c] px-5 py-3.5 text-sm font-medium text-white transition hover:opacity-85">
+                    Explore possibilities →
+                  </button>
+                </div>
+              ) : selectedSignal ? (
+                <div>
+                  <button
+                    onClick={() => {
+                      setSelectedSignal(null);
+                      setInquiryMode(false);
+                    }}
                     className="mb-6 text-xs font-medium text-black/40 transition hover:text-black"
                   >
                     ← All system signals
@@ -346,7 +431,10 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <button className="mt-8 w-full rounded-xl bg-[#18201c] px-5 py-3.5 text-sm font-medium text-white transition hover:opacity-85">
+                  <button
+                    onClick={() => setInquiryMode(true)}
+                    className="mt-8 w-full rounded-xl bg-[#18201c] px-5 py-3.5 text-sm font-medium text-white transition hover:opacity-85"
+                  >
                     Explore this pattern →
                   </button>
                 </div>
