@@ -76,6 +76,7 @@ export default function Home() {
   >(null);
 
   const [inquiryMode, setInquiryMode] = useState(false);
+  const [possibilityMode, setPossibilityMode] = useState(false);
 
   return (
     <main className="min-h-screen bg-[#f7f8f6] text-[#18201c]">
@@ -282,10 +283,115 @@ export default function Home() {
 
           {/* Signals panel */}
             <aside className="bg-[#fcfcfb] p-7">
-              {selectedSignal && inquiryMode ? (
+              {selectedSignal && possibilityMode ? (
                 <div>
                   <button
-                    onClick={() => setInquiryMode(false)}
+                    onClick={() => setPossibilityMode(false)}
+                    className="mb-6 text-xs font-medium text-black/40 transition hover:text-black"
+                  >
+                    ← Back to inquiry
+                  </button>
+
+                  <p className="text-xs font-medium uppercase tracking-[0.16em] text-black/35">
+                    Possibilities
+                  </p>
+
+                  <h3 className="mt-2 text-2xl font-medium">
+                    What could change?
+                  </h3>
+
+                  <p className="mt-3 text-sm leading-6 text-black/55">
+                    Explore possible shifts in the system without treating any one path as
+                    the answer.
+                  </p>
+
+                  <div className="mt-6 rounded-2xl border border-black/8 bg-white p-4">
+                    <p className="text-xs font-medium uppercase tracking-[0.12em] text-black/35">
+                      Pattern being explored
+                    </p>
+
+                    <p className="mt-2 text-sm font-medium">
+                      {selectedSignal.title}
+                    </p>
+
+                    <p className="mt-1 text-xs leading-5 text-black/50">
+                      {selectedSignal.description}
+                    </p>
+                  </div>
+
+                  <div className="mt-7">
+                    <p className="text-xs font-medium uppercase tracking-[0.14em] text-black/35">
+                      Possible Shifts
+                    </p>
+
+                    <p className="mt-2 text-xs leading-5 text-black/45">
+                      These are directions for exploration, not recommendations.
+                    </p>
+
+                    <div className="mt-4 space-y-3">
+                      {[
+                        {
+                          title: "Bring customer context closer to planning",
+                          description:
+                            "Explore ways customer evidence could remain visible as priorities move between Sales and Product.",
+                        },
+                        {
+                          title: "Create a shared feedback loop",
+                          description:
+                            "Explore whether teams could see what happened after customer feedback was passed along.",
+                        },
+                        {
+                          title: "Test earlier cross-team sensemaking",
+                          description:
+                            "Explore whether Product and Sales could examine emerging customer signals together before planning begins.",
+                        },
+                      ].map((possibility, index) => (
+                        <button
+                          key={possibility.title}
+                          className="group w-full rounded-xl border border-black/8 bg-white p-4 text-left transition hover:border-black/20 hover:shadow-sm"
+                        >
+                          <div className="flex items-start gap-3">
+                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#eef1ed] text-[10px] font-medium">
+                              {index + 1}
+                            </span>
+
+                            <div>
+                              <p className="text-xs font-medium">
+                                {possibility.title}
+                              </p>
+
+                              <p className="mt-1.5 text-xs leading-5 text-black/50">
+                                {possibility.description}
+                              </p>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-7 rounded-2xl bg-[#eef1ed] p-4">
+                    <p className="text-xs font-medium uppercase tracking-[0.12em] text-black/35">
+                      Your Possibility
+                    </p>
+
+                    <textarea
+                      placeholder="What change in the system would you like to explore?"
+                      className="mt-3 min-h-24 w-full resize-none rounded-xl border border-black/8 bg-white p-3 text-xs leading-5 outline-none placeholder:text-black/30 focus:border-black/20"
+                    />
+                  </div>
+
+                  <button className="mt-5 w-full rounded-xl bg-[#18201c] px-5 py-3.5 text-sm font-medium text-white transition hover:opacity-85">
+                    Design an experiment →
+                  </button>
+                </div>
+              ) : selectedSignal && inquiryMode ? (
+                <div>
+                  <button
+                    onClick={() => {
+                      setInquiryMode(false);
+                      setPossibilityMode(false);
+                    }}
                     className="mb-6 text-xs font-medium text-black/40 transition hover:text-black"
                   >
                     ← Back to evidence
@@ -358,7 +464,10 @@ export default function Home() {
                     />
                   </div>
 
-                  <button className="mt-5 w-full rounded-xl bg-[#18201c] px-5 py-3.5 text-sm font-medium text-white transition hover:opacity-85">
+                  <button
+                    onClick={() => setPossibilityMode(true)}
+                    className="mt-5 w-full rounded-xl bg-[#18201c] px-5 py-3.5 text-sm font-medium text-white transition hover:opacity-85"
+                  >
                     Explore possibilities →
                   </button>
                 </div>
@@ -368,6 +477,7 @@ export default function Home() {
                     onClick={() => {
                       setSelectedSignal(null);
                       setInquiryMode(false);
+                      setPossibilityMode(false);
                     }}
                     className="mb-6 text-xs font-medium text-black/40 transition hover:text-black"
                   >
