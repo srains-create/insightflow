@@ -171,9 +171,32 @@ export default function Home() {
                   y1="180"
                   x2="470"
                   y2="180"
-                  stroke="#8c9b90"
-                  strokeWidth="3"
-                  strokeDasharray="7 6"
+                  stroke={
+                    selectedSignal?.id === "product-sales"
+                      ? "#33463a"
+                      : "#8c9b90"
+                  }
+                  strokeWidth={
+                    selectedSignal?.id === "product-sales" ? "5" : "3"
+                  }
+                  strokeDasharray={
+                    selectedSignal?.id === "product-sales" ? "0" : "7 6"
+                  }
+                  className="transition-all duration-300"
+                />
+                <line
+                  x1="230"
+                  y1="180"
+                  x2="470"
+                  y2="180"
+                  stroke="transparent"
+                  strokeWidth="20"
+                  className="cursor-pointer"
+                  onClick={() =>
+                    setSelectedSignal(
+                      signals.find((signal) => signal.id === "product-sales") ?? null
+                    )
+                  }
                 />
                 <line
                   x1="230"
@@ -218,8 +241,19 @@ export default function Home() {
               </svg>
 
               <Node label="Leadership" top="7%" left="50%" highlight />
-              <Node label="Product" top="33%" left="33%" />
-              <Node label="Sales" top="33%" left="67%" />
+              <Node
+              label="Product"
+              top="33%"
+              left="33%"
+              selected={selectedSignal?.id === "product-sales"}
+              />
+
+              <Node
+                label="Sales"
+                top="33%"
+                left="67%"
+                selected={selectedSignal?.id === "product-sales"}
+              />
               <Node label="Engineering" top="61%" left="15%" />
               <Node label="Design" top="64%" left="43%" />
               <Node label="Marketing" top="61%" left="82%" />
@@ -393,18 +427,20 @@ function Node({
   top,
   left,
   highlight = false,
+  selected = false,
 }: {
   label: string;
   top: string;
   left: string;
   highlight?: boolean;
+  selected?: boolean;
 }) {
   return (
     <button
       className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full border px-4 py-2.5 text-xs font-medium shadow-sm transition hover:-translate-y-[55%] hover:shadow-md ${
-        highlight
-          ? "border-[#33463a] bg-[#33463a] text-white"
-          : "border-black/10 bg-white text-[#263129]"
+      highlight || selected
+        ? "border-[#33463a] bg-[#33463a] text-white"
+        : "border-black/10 bg-white text-[#263129]"
       }`}
       style={{ top, left }}
     >
