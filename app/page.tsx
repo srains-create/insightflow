@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+const STORAGE_KEY = "insightflow-active-inquiry-v1";
 
 const signals = [
   { id: "decision-flow", title: "Decision Flow", description: "Executive approval appears across several cross-functional decisions.", evidenceCount: "7 conversations", recurring: ["approval", "waiting", "decision", "leadership"], evidence: [{ person: "Engineering Lead", quote: "Even relatively small decisions sometimes move upward before we can act." }, { person: "Product Director", quote: "There are situations where everyone agrees, but we still wait for executive confirmation." }] },
@@ -14,6 +16,20 @@ const possibleShifts = [
   { title: "Test earlier cross-team sensemaking", description: "Explore whether Product and Sales could examine emerging customer signals together before planning begins." },
 ];
 
+type SavedInquiry = {
+  selectedSignalId: string | null;
+  inquiryMode: boolean;
+  possibilityMode: boolean;
+  experimentMode: boolean;
+  learningMode: boolean;
+  reflection: string;
+  possibility: string;
+  hypothesis: string;
+  experiment: string;
+  observation: string;
+  learningQuestion: string;
+};
+
 export default function Home() {
   const [selectedSignal, setSelectedSignal] = useState<(typeof signals)[number] | null>(null);
   const [inquiryMode, setInquiryMode] = useState(false);
@@ -26,6 +42,50 @@ export default function Home() {
   const [experiment, setExperiment] = useState("");
   const [observation, setObservation] = useState("");
   const [learningQuestion, setLearningQuestion] = useState("");
+  const [storageReady, setStorageReady] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw) as Partial<SavedInquiry>;
+        const signal = signals.find((item) => item.id === saved.selectedSignalId) ?? null;
+        setSelectedSignal(signal);
+        setInquiryMode(Boolean(saved.inquiryMode));
+        setPossibilityMode(Boolean(saved.possibilityMode));
+        setExperimentMode(Boolean(saved.experimentMode));
+        setLearningMode(Boolean(saved.learningMode));
+        setReflection(typeof saved.reflection === "string" ? saved.reflection : "");
+        setPossibility(typeof saved.possibility === "string" ? saved.possibility : "");
+        setHypothesis(typeof saved.hypothesis === "string" ? saved.hypothesis : "");
+        setExperiment(typeof saved.experiment === "string" ? saved.experiment : "");
+        setObservation(typeof saved.observation === "string" ? saved.observation : "");
+        setLearningQuestion(typeof saved.learningQuestion === "string" ? saved.learningQuestion : "");
+      }
+    } catch {
+      window.localStorage.removeItem(STORAGE_KEY);
+    } finally {
+      setStorageReady(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!storageReady) return;
+    const saved: SavedInquiry = {
+      selectedSignalId: selectedSignal?.id ?? null,
+      inquiryMode,
+      possibilityMode,
+      experimentMode,
+      learningMode,
+      reflection,
+      possibility,
+      hypothesis,
+      experiment,
+      observation,
+      learningQuestion,
+    };
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+  }, [storageReady, selectedSignal, inquiryMode, possibilityMode, experimentMode, learningMode, reflection, possibility, hypothesis, experiment, observation, learningQuestion]);
 
   const clearWorkflow = () => { setReflection(""); setPossibility(""); setHypothesis(""); setExperiment(""); setObservation(""); setLearningQuestion(""); };
   const selectSignal = (signal: (typeof signals)[number]) => { setSelectedSignal(signal); setInquiryMode(false); setPossibilityMode(false); setExperimentMode(false); setLearningMode(false); clearWorkflow(); };
