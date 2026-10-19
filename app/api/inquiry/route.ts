@@ -53,7 +53,12 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!process.env.OPENAI_API_KEY) {
+    // InsightFlow is demo-first so the prototype works without billing or
+    // external API calls. Live AI must be intentionally enabled in the
+    // environment in addition to providing an API key.
+    const liveAiEnabled = process.env.INSIGHTFLOW_LIVE_AI === "true";
+
+    if (!liveAiEnabled || !process.env.OPENAI_API_KEY) {
       return NextResponse.json({
         inquiry: buildDemoInquiry(body),
         mode: "demo",
