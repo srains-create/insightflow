@@ -108,6 +108,7 @@ function Possibilities({reflection,possibility,setPossibility,back,next}:{reflec
 function Experiment({pattern,reflection,possibility,hypothesis,setHypothesis,experiment,setExperiment,observation,setObservation,learningQuestion,setLearningQuestion,back,next}:{pattern:string;reflection:string;possibility:string;hypothesis:string;setHypothesis:(v:string)=>void;experiment:string;setExperiment:(v:string)=>void;observation:string;setObservation:(v:string)=>void;learningQuestion:string;setLearningQuestion:(v:string)=>void;back:()=>void;next:()=>void}){
   const [suggesting,setSuggesting]=useState(false);
   const [suggestionError,setSuggestionError]=useState("");
+  const [designQuality,setDesignQuality]=useState<Record<string,{passed:boolean;explanation:string}>|null>(null);
 
   const suggestExperiment=async()=>{
     if(!possibility.trim())return;
@@ -129,6 +130,7 @@ function Experiment({pattern,reflection,possibility,hypothesis,setHypothesis,exp
       }
 
       const design=data.design;
+      setDesignQuality(data.quality||null);
 
       if(!hypothesis.trim())setHypothesis(design.hypothesis||"");
       if(!experiment.trim())setExperiment(design.experiment||"");
@@ -167,6 +169,27 @@ function Experiment({pattern,reflection,possibility,hypothesis,setHypothesis,exp
       </button>
 
       {suggestionError&&<p className="mt-3 text-xs leading-5 text-red-700">{suggestionError}</p>}
+
+      {designQuality&&(
+        <div className="mt-4 border-t border-[#33463a]/10 pt-4">
+          <p className="text-[10px] uppercase tracking-[0.12em] text-black/35">Design quality</p>
+          <div className="mt-3 space-y-2">
+            {Object.entries(designQuality).map(([key,signal])=>(
+              <div key={key} className="rounded-xl bg-white p-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-[#33463a]">{signal.passed?"✓":"○"}</span>
+                  <p className="text-xs font-medium capitalize text-[#33463a]">
+                    {key.replace(/([A-Z])/g," $1")}
+                  </p>
+                </div>
+                <p className="mt-1 pl-5 text-[11px] leading-4 text-black/45">
+                  {signal.explanation}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
 
     <div className="mt-6 space-y-5">
