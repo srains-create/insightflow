@@ -27,7 +27,7 @@ const demoQuestions: Record<string, string[]> = {
   ],
 };
 
-function buildDemoInquiry(body: InquiryRequest) {
+function buildDemoQuestions(body: InquiryRequest) {
   const questions = demoQuestions[body.pattern ?? ""] ?? [
     "What assumption are we making about this pattern that the current evidence does not yet prove?",
     "Whose perspective is missing from the evidence we have?",
@@ -39,7 +39,30 @@ function buildDemoInquiry(body: InquiryRequest) {
     ? `Your reflection suggests a working interpretation: “${reflection}” What observation would most strongly challenge that interpretation?`
     : questions[0];
 
-  return [contextualQuestion, ...questions.filter((q) => q !== contextualQuestion)].slice(0, 3).join("\n\n");
+  return [contextualQuestion, ...questions.filter((q) => q !== contextualQuestion)].slice(0, 3);
+}
+
+function parseInquiryQuestions(text: string) {
+  const normalized = text.trim();
+  if (!normalized) return [];
+
+  const lines = normalized
+    .split(/\n+/)
+    .map((line) => line.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, "").trim())
+    .filter(Boolean);
+
+  if (lines.length >= 2) return lines.slice(0, 3);
+
+  const questions = normalized.match(/[^?]+\?/g)?.map((question) => question.trim()) ?? [];
+  return questions.slice(0, 3);
+}
+
+function inquiryPayload(questions: string[], mode: "demo" | "live") {
+  return {
+    inquiry: questions.join("\n\n"),
+    questions,
+    mode,
+  };
 }
 
 export async function POST(request: Request) {
@@ -59,10 +82,7 @@ export async function POST(request: Request) {
     const liveAiEnabled = process.env.INSIGHTFLOW_LIVE_AI === "true";
 
     if (!liveAiEnabled || !process.env.OPENAI_API_KEY) {
-      return NextResponse.json({
-        inquiry: buildDemoInquiry(body),
-        mode: "demo",
-      });
+      return NextResponse.json(inquiryPayload(buildDemoQuestions(body), "demo"));
     }
 
     const evidence = Array.isArray(body.evidence)
@@ -86,17 +106,19 @@ Your job is to deepen human inquiry, not make organizational decisions, diagnose
 
 Ground your response only in the supplied pattern, evidence, recurring language, and human reflection. Distinguish observations from interpretations. Surface assumptions, missing perspectives, alternative explanations, and evidence that could challenge the current interpretation.
 
-Respond with exactly three concise inquiry questions. Each question should help a human investigator think more carefully. Do not give recommendations or solutions. Do not claim causation from recurring patterns.`,
+Respond with exactly three concise inquiry questions, one per line. Each question should help a human investigator think more carefully. Do not give recommendations or solutions. Do not claim causation from recurring patterns.`,
         input: `Pattern: ${body.pattern}\nDescription: ${body.description ?? "Not supplied."}\nRecurring language: ${recurring}\n\nEvidence:\n${evidence}\n\nHuman reflection:\n${body.reflection?.trim() || "No reflection has been entered yet."}`,
       });
 
-      return NextResponse.json({ inquiry: response.output_text, mode: "live" });
+      const questions = parseInquiryQuestions(response.output_text);
+      if (questions.length === 0) {
+        throw new Error("Inquiry Partner returned no usable questions.");
+      }
+
+      return NextResponse.json(inquiryPayload(questions, "live"));
     } catch (error) {
       console.warn("Live inquiry unavailable; using demo mode.", error);
-      return NextResponse.json({
-        inquiry: buildDemoInquiry(body),
-        mode: "demo",
-      });
+      return NextResponse.json(inquiryPayload(buildDemoQuestions(body), "demo"));
     }
   } catch (error) {
     console.error("InsightFlow inquiry request error:", error);
