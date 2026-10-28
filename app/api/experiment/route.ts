@@ -13,6 +13,13 @@ type ExperimentDesign = {
   learningQuestion: string;
 };
 
+type DesignQuality = {
+  contextual: boolean;
+  reversible: boolean;
+  observable: boolean;
+  preservesHumanJudgment: boolean;
+};
+
 type DesignBuilder = (context: string) => ExperimentDesign;
 
 const designs: Record<string, DesignBuilder> = {
@@ -66,6 +73,15 @@ function buildExperimentDesign(body: ExperimentRequest): ExperimentDesign {
   };
 }
 
+function assessDesignQuality(body: ExperimentRequest): DesignQuality {
+  return {
+    contextual: Boolean(body.reflection?.trim() || body.pattern?.trim()),
+    reversible: true,
+    observable: true,
+    preservesHumanJudgment: true,
+  };
+}
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as ExperimentRequest;
@@ -78,8 +94,11 @@ export async function POST(request: Request) {
       );
     }
 
+    const normalizedRequest = { ...body, possibility };
+
     return NextResponse.json({
-      design: buildExperimentDesign({ ...body, possibility }),
+      design: buildExperimentDesign(normalizedRequest),
+      quality: assessDesignQuality(normalizedRequest),
       mode: "demo",
     });
   } catch (error) {
