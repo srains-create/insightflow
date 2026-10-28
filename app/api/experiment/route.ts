@@ -13,11 +13,16 @@ type ExperimentDesign = {
   learningQuestion: string;
 };
 
+type QualitySignal = {
+  passed: boolean;
+  reason: string;
+};
+
 type DesignQuality = {
-  contextual: boolean;
-  reversible: boolean;
-  observable: boolean;
-  preservesHumanJudgment: boolean;
+  contextual: QualitySignal;
+  reversible: QualitySignal;
+  observable: QualitySignal;
+  preservesHumanJudgment: QualitySignal;
 };
 
 type DesignBuilder = (context: string) => ExperimentDesign;
@@ -74,11 +79,27 @@ function buildExperimentDesign(body: ExperimentRequest): ExperimentDesign {
 }
 
 function assessDesignQuality(body: ExperimentRequest): DesignQuality {
+  const hasContext = Boolean(body.reflection?.trim() || body.pattern?.trim());
+
   return {
-    contextual: Boolean(body.reflection?.trim() || body.pattern?.trim()),
-    reversible: true,
-    observable: true,
-    preservesHumanJudgment: true,
+    contextual: {
+      passed: hasContext,
+      reason: hasContext
+        ? "The suggestion is grounded in the selected pattern or the user's reflection."
+        : "Add a pattern or reflection to ground the experiment in the inquiry context.",
+    },
+    reversible: {
+      passed: true,
+      reason: "The experiment is framed as a small test that can be stopped before broader adoption.",
+    },
+    observable: {
+      passed: true,
+      reason: "The design includes specific evidence to watch for and compare with the hypothesis.",
+    },
+    preservesHumanJudgment: {
+      passed: true,
+      reason: "The system proposes a test and learning question without deciding what the evidence means for the user.",
+    },
   };
 }
 
