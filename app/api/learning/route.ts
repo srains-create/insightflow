@@ -29,6 +29,12 @@ type SynthesisQuality = {
   supportsContinuedInquiry: QualitySignal;
 };
 
+type ConfidenceGuidance = {
+  level: "emerging" | "developing" | "stronger";
+  reason: string;
+  missingEvidence: string[];
+};
+
 function clean(value?: string) {
   return value?.trim() ?? "";
 }
@@ -113,6 +119,44 @@ function assessSynthesisQuality(body: LearningRequest): SynthesisQuality {
   };
 }
 
+function assessConfidence(body: LearningRequest): ConfidenceGuidance {
+  const missingEvidence: string[] = [];
+  const hasOutcome = Boolean(clean(body.outcome));
+  const hasSurprise = Boolean(clean(body.surprise));
+  const hasHypothesis = Boolean(clean(body.hypothesis));
+  const hasResult = Boolean(body.hypothesisResult);
+  const hasNextInquiry = Boolean(clean(body.nextQuestion) || clean(body.learningQuestion));
+
+  if (!hasOutcome) missingEvidence.push("a clearly recorded experiment outcome");
+  if (!hasHypothesis) missingEvidence.push("the original hypothesis for comparison");
+  if (!hasResult) missingEvidence.push("a supported, challenged, or inconclusive hypothesis assessment");
+  if (!hasNextInquiry) missingEvidence.push("a question for continued inquiry");
+
+  const evidenceSignals = [hasOutcome, hasSurprise, hasHypothesis, hasResult, hasNextInquiry].filter(Boolean).length;
+
+  if (evidenceSignals >= 5) {
+    return {
+      level: "stronger",
+      reason: "The synthesis has an observed outcome, interpretive context, an explicit hypothesis assessment, unexpected evidence, and a question for continued inquiry. Confidence still describes the completeness of the learning record, not certainty that the hypothesis is true.",
+      missingEvidence,
+    };
+  }
+
+  if (evidenceSignals >= 3) {
+    return {
+      level: "developing",
+      reason: "The learning record contains several useful evidence signals, but important context is still missing. Treat the synthesis as a working interpretation that should be tested again.",
+      missingEvidence,
+    };
+  }
+
+  return {
+    level: "emerging",
+    reason: "The synthesis is based on limited recorded evidence. Use it to guide the next inquiry rather than as a conclusion about the system.",
+    missingEvidence,
+  };
+}
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as LearningRequest;
@@ -127,6 +171,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       synthesis: synthesizeLearning(body),
       quality: assessSynthesisQuality(body),
+      confidence: assessConfidence(body),
       mode: "demo",
     });
   } catch (error) {
