@@ -17,6 +17,18 @@ type LearningSynthesis = {
   nextInquiry: string;
 };
 
+type QualitySignal = {
+  passed: boolean;
+  reason: string;
+};
+
+type SynthesisQuality = {
+  evidenceGrounded: QualitySignal;
+  distinguishesInterpretation: QualitySignal;
+  avoidsCausalOverclaim: QualitySignal;
+  supportsContinuedInquiry: QualitySignal;
+};
+
 function clean(value?: string) {
   return value?.trim() ?? "";
 }
@@ -70,6 +82,37 @@ function synthesizeLearning(body: LearningRequest): LearningSynthesis {
   };
 }
 
+function assessSynthesisQuality(body: LearningRequest): SynthesisQuality {
+  const hasObservedEvidence = Boolean(clean(body.outcome) || clean(body.surprise));
+  const hasInterpretiveContext = Boolean(clean(body.hypothesis) || body.hypothesisResult);
+  const hasNextInquiry = Boolean(clean(body.nextQuestion) || clean(body.learningQuestion));
+
+  return {
+    evidenceGrounded: {
+      passed: hasObservedEvidence,
+      reason: hasObservedEvidence
+        ? "The synthesis is grounded in an outcome or surprise recorded after the experiment."
+        : "Record an observed outcome or surprise before treating the synthesis as learning.",
+    },
+    distinguishesInterpretation: {
+      passed: hasInterpretiveContext,
+      reason: hasInterpretiveContext
+        ? "The synthesis compares observed evidence with the original hypothesis or its recorded result."
+        : "Add the original hypothesis or hypothesis result so observations can be distinguished from interpretation.",
+    },
+    avoidsCausalOverclaim: {
+      passed: true,
+      reason: "The synthesis describes evidence as consistent with, challenging, or insufficient for a hypothesis rather than claiming the experiment proved causality.",
+    },
+    supportsContinuedInquiry: {
+      passed: hasNextInquiry,
+      reason: hasNextInquiry
+        ? "The learning record contains a question that can carry the new evidence into another inquiry."
+        : "Add a learning or next question to make the transition from outcome to continued inquiry explicit.",
+    },
+  };
+}
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as LearningRequest;
@@ -83,6 +126,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       synthesis: synthesizeLearning(body),
+      quality: assessSynthesisQuality(body),
       mode: "demo",
     });
   } catch (error) {
