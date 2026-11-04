@@ -157,9 +157,44 @@ function assessConfidence(body: LearningRequest): ConfidenceGuidance {
   };
 }
 
+function isLearningRequest(value: unknown): value is LearningRequest {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+
+  const fields = value as Record<string, unknown>;
+  const textFields = [
+    "pattern",
+    "hypothesis",
+    "outcome",
+    "surprise",
+    "learningQuestion",
+    "nextQuestion",
+  ];
+
+  if (textFields.some((field) => fields[field] !== undefined && typeof fields[field] !== "string")) {
+    return false;
+  }
+
+  return (
+    fields.hypothesisResult === undefined ||
+    fields.hypothesisResult === "" ||
+    fields.hypothesisResult === "supported" ||
+    fields.hypothesisResult === "challenged" ||
+    fields.hypothesisResult === "inconclusive"
+  );
+}
+
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as LearningRequest;
+    const payload: unknown = await request.json();
+
+    if (!isLearningRequest(payload)) {
+      return NextResponse.json(
+        { error: "Invalid learning synthesis request. Check field types and hypothesis result." },
+        { status: 400 },
+      );
+    }
+
+    const body = payload;
 
     if (!clean(body.outcome) && !clean(body.surprise)) {
       return NextResponse.json(
