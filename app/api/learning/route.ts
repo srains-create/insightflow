@@ -170,7 +170,10 @@ function isLearningRequest(value: unknown): value is LearningRequest {
     "nextQuestion",
   ];
 
-  if (textFields.some((field) => fields[field] !== undefined && (typeof fields[field] !== "string" || fields[field].length > 5000))) {
+  if (textFields.some((field) => {
+    const value = fields[field];
+    return value !== undefined && (typeof value !== "string" || value.length > 5000);
+  })) {
     return false;
   }
 
