@@ -75,19 +75,23 @@ export async function POST(request: Request) {
     const fields = payload as Record<string, unknown>;
     const textFields = ["pattern", "description", "reflection"];
     const validText = textFields.every(
-      (field) => fields[field] === undefined || typeof fields[field] === "string",
+      (field) => {
+        const value = fields[field];
+        return value === undefined || (typeof value === "string" && value.length <= 5000);
+      },
     );
     const validRecurring = fields.recurring === undefined ||
-      (Array.isArray(fields.recurring) && fields.recurring.every((item) => typeof item === "string"));
+      (Array.isArray(fields.recurring) && fields.recurring.length <= 12 && fields.recurring.every((item) => typeof item === "string" && item.length <= 500));
     const validEvidence = fields.evidence === undefined ||
-      (Array.isArray(fields.evidence) && fields.evidence.every(
+      (Array.isArray(fields.evidence) && fields.evidence.length <= 8 && fields.evidence.every(
         (item) => item !== null && typeof item === "object" && !Array.isArray(item) &&
-          typeof item.person === "string" && typeof item.quote === "string",
+          typeof item.person === "string" && item.person.length <= 200 &&
+          typeof item.quote === "string" && item.quote.length <= 2000,
       ));
 
     if (!validText || !validRecurring || !validEvidence) {
       return NextResponse.json(
-        { error: "Invalid inquiry fields or evidence format." },
+        { error: "Invalid inquiry fields, field lengths, or evidence format." },
         { status: 400 },
       );
     }
