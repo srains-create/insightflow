@@ -105,7 +105,22 @@ function assessDesignQuality(body: ExperimentRequest): DesignQuality {
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as ExperimentRequest;
+    const payload: unknown = await request.json();
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+      return NextResponse.json({ error: "Invalid experiment request." }, { status: 400 });
+    }
+
+    const fields = payload as Record<string, unknown>;
+    if (["possibility", "reflection", "pattern"].some(
+      (field) => fields[field] !== undefined && typeof fields[field] !== "string",
+    )) {
+      return NextResponse.json(
+        { error: "Experiment fields must be strings." },
+        { status: 400 },
+      );
+    }
+
+    const body = payload as ExperimentRequest;
     const possibility = body.possibility?.trim();
 
     if (!possibility) {
@@ -123,6 +138,9 @@ export async function POST(request: Request) {
       mode: "demo",
     });
   } catch (error) {
+    if (error instanceof SyntaxError) {
+      return NextResponse.json({ error: "Invalid JSON in experiment request." }, { status: 400 });
+    }
     console.error("InsightFlow experiment design request error:", error);
     return NextResponse.json(
       { error: "The experiment designer could not process this request." },
