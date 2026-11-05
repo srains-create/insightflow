@@ -170,7 +170,7 @@ function isLearningRequest(value: unknown): value is LearningRequest {
     "nextQuestion",
   ];
 
-  if (textFields.some((field) => fields[field] !== undefined && typeof fields[field] !== "string")) {
+  if (textFields.some((field) => fields[field] !== undefined && (typeof fields[field] !== "string" || fields[field].length > 5000))) {
     return false;
   }
 
@@ -189,7 +189,7 @@ export async function POST(request: Request) {
 
     if (!isLearningRequest(payload)) {
       return NextResponse.json(
-        { error: "Invalid learning synthesis request. Check field types and hypothesis result." },
+        { error: "Invalid learning synthesis request. Check field types, 5000-character limits, and hypothesis result." },
         { status: 400 },
       );
     }
