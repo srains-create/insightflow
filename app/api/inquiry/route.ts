@@ -35,8 +35,11 @@ function buildDemoQuestions(body: InquiryRequest) {
   ];
 
   const reflection = body.reflection?.trim();
-  const contextualQuestion = reflection
-    ? `Your reflection suggests a working interpretation: “${reflection}” What observation would most strongly challenge that interpretation?`
+  const shortReflection = reflection && reflection.length > 240
+    ? `${reflection.slice(0, 237)}...`
+    : reflection;
+  const contextualQuestion = shortReflection
+    ? `Your reflection suggests a working interpretation: “${shortReflection}” What observation would most strongly challenge that interpretation?`
     : questions[0];
 
   return [contextualQuestion, ...questions.filter((q) => q !== contextualQuestion)].slice(0, 3);
