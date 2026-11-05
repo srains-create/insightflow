@@ -112,10 +112,13 @@ export async function POST(request: Request) {
 
     const fields = payload as Record<string, unknown>;
     if (["possibility", "reflection", "pattern"].some(
-      (field) => fields[field] !== undefined && typeof fields[field] !== "string",
+      (field) => {
+        const value = fields[field];
+        return value !== undefined && (typeof value !== "string" || value.length > 5000);
+      },
     )) {
       return NextResponse.json(
-        { error: "Experiment fields must be strings." },
+        { error: "Experiment fields must be strings of at most 5000 characters." },
         { status: 400 },
       );
     }
