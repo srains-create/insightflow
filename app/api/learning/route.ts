@@ -210,6 +210,13 @@ export async function POST(request: Request) {
       mode: "demo",
     });
   } catch (error) {
+    if (error instanceof SyntaxError) {
+      return NextResponse.json(
+        { error: "Invalid JSON in learning synthesis request." },
+        { status: 400 },
+      );
+    }
+
     console.error("InsightFlow learning synthesis request error:", error);
     return NextResponse.json(
       { error: "The learning synthesis could not process this request." },
