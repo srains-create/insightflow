@@ -157,9 +157,47 @@ function assessConfidence(body: LearningRequest): ConfidenceGuidance {
   };
 }
 
+function isLearningRequest(value: unknown): value is LearningRequest {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+
+  const fields = value as Record<string, unknown>;
+  const textFields = [
+    "pattern",
+    "hypothesis",
+    "outcome",
+    "surprise",
+    "learningQuestion",
+    "nextQuestion",
+  ];
+
+  if (textFields.some((field) => {
+    const value = fields[field];
+    return value !== undefined && (typeof value !== "string" || value.length > 5000);
+  })) {
+    return false;
+  }
+
+  return (
+    fields.hypothesisResult === undefined ||
+    fields.hypothesisResult === "" ||
+    fields.hypothesisResult === "supported" ||
+    fields.hypothesisResult === "challenged" ||
+    fields.hypothesisResult === "inconclusive"
+  );
+}
+
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as LearningRequest;
+    const payload: unknown = await request.json();
+
+    if (!isLearningRequest(payload)) {
+      return NextResponse.json(
+        { error: "Invalid learning synthesis request. Check field types, 5000-character limits, and hypothesis result." },
+        { status: 400 },
+      );
+    }
+
+    const body = payload;
 
     if (!clean(body.outcome) && !clean(body.surprise)) {
       return NextResponse.json(
@@ -175,6 +213,13 @@ export async function POST(request: Request) {
       mode: "demo",
     });
   } catch (error) {
+    if (error instanceof SyntaxError) {
+      return NextResponse.json(
+        { error: "Invalid JSON in learning synthesis request." },
+        { status: 400 },
+      );
+    }
+
     console.error("InsightFlow learning synthesis request error:", error);
     return NextResponse.json(
       { error: "The learning synthesis could not process this request." },

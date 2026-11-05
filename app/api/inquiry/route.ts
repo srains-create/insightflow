@@ -67,9 +67,37 @@ function inquiryPayload(questions: string[], mode: "demo" | "live") {
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as InquiryRequest;
+    const payload: unknown = await request.json();
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+      return NextResponse.json({ error: "Invalid inquiry request." }, { status: 400 });
+    }
 
-    if (!body.pattern) {
+    const fields = payload as Record<string, unknown>;
+    const textFields = ["pattern", "description", "reflection"];
+    const validText = textFields.every(
+      (field) => {
+        const value = fields[field];
+        return value === undefined || (typeof value === "string" && value.length <= 5000);
+      },
+    );
+    const validRecurring = fields.recurring === undefined ||
+      (Array.isArray(fields.recurring) && fields.recurring.length <= 12 && fields.recurring.every((item) => typeof item === "string" && item.length <= 500));
+    const validEvidence = fields.evidence === undefined ||
+      (Array.isArray(fields.evidence) && fields.evidence.length <= 8 && fields.evidence.every(
+        (item) => item !== null && typeof item === "object" && !Array.isArray(item) &&
+          typeof item.person === "string" && item.person.length <= 200 &&
+          typeof item.quote === "string" && item.quote.length <= 2000,
+      ));
+
+    if (!validText || !validRecurring || !validEvidence) {
+      return NextResponse.json(
+        { error: "Invalid inquiry fields, field lengths, or evidence format." },
+        { status: 400 },
+      );
+    }
+
+    const body = payload as InquiryRequest;
+    if (!body.pattern?.trim()) {
       return NextResponse.json(
         { error: "A pattern is required." },
         { status: 400 },
@@ -121,6 +149,9 @@ Respond with exactly three concise inquiry questions, one per line. Each questio
       return NextResponse.json(inquiryPayload(buildDemoQuestions(body), "demo"));
     }
   } catch (error) {
+    if (error instanceof SyntaxError) {
+      return NextResponse.json({ error: "Invalid JSON in inquiry request." }, { status: 400 });
+    }
     console.error("InsightFlow inquiry request error:", error);
     return NextResponse.json(
       { error: "The inquiry partner could not process this request." },

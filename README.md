@@ -20,7 +20,8 @@ In the current prototype, a user can:
 - turn a selected possibility into a hypothesis, small experiment, observation criteria, and learning question;
 - save completed inquiries to a Learning Library;
 - record experiment outcomes and whether a hypothesis was supported, challenged, or inconclusive;
-- continue a learning chain into a follow-up inquiry.
+- continue a learning chain into a follow-up inquiry;
+- generate a deterministic learning synthesis that compares the hypothesis with the recorded outcome, highlights evidence, and suggests a next inquiry.
 
 ## Human-in-the-loop AI
 
@@ -42,9 +43,34 @@ Completed inquiries are stored locally in the browser for the prototype. The Lea
 - experiment outcome follow-up;
 - hypothesis result tracking;
 - related learning chains;
-- pattern-level learning summaries.
+- pattern-level learning summaries;
+- on-demand Learning Synthesis with confidence guidance, missing-evidence prompts, and quality checks.
 
 Browser `localStorage` is intentionally used for this prototype. A production version would move persistence to an authenticated database with tenant isolation and appropriate security and retention controls.
+
+## Learning Synthesis API
+
+After saving an outcome in the Learning Library, select **Synthesize learning** to request a structured synthesis from `POST /api/learning`. This endpoint currently runs in deterministic demo mode; it does not call a live AI model.
+
+The endpoint accepts a JSON object with optional string fields `pattern`, `hypothesis`, `outcome`, `surprise`, `learningQuestion`, and `nextQuestion`. The optional `hypothesisResult` field must be `supported`, `challenged`, `inconclusive`, or an empty string. At least one of `outcome` or `surprise` must contain non-whitespace text.
+
+The response includes:
+
+- `synthesis`: comparison, changed understanding, evidence to carry forward, and next inquiry;
+- `quality`: four checks with a pass flag and an explanation (`reason`);
+- `confidence`: a completeness-oriented level, rationale, and missing-evidence suggestions;
+- `mode: "demo"`: identifies the deterministic implementation.
+
+Malformed field types, unsupported hypothesis results, and requests without recorded observations receive HTTP 400. Confidence reflects how complete the learning record is, **not** the probability that a hypothesis is correct.
+
+### Manual verification
+
+1. Run `npm run build` and `npm run dev`.
+2. Open a saved inquiry in the Learning Library and record an outcome or surprise.
+3. Click **Synthesize learning** and check that the synthesis, confidence guidance, and quality checks appear.
+4. Click **Refresh learning synthesis** to verify that the request can be repeated.
+5. Edit the recorded outcome and synthesize again; confirm the new response reflects the saved text.
+6. Confirm that an incomplete request to `POST /api/learning` returns HTTP 400 rather than a server error.
 
 ## Technology
 
