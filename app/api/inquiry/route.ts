@@ -35,8 +35,11 @@ function buildDemoQuestions(body: InquiryRequest) {
   ];
 
   const reflection = body.reflection?.trim();
-  const contextualQuestion = reflection
-    ? `Your reflection suggests a working interpretation: “${reflection}” What observation would most strongly challenge that interpretation?`
+  const shortReflection = reflection && reflection.length > 240
+    ? `${reflection.slice(0, 237)}...`
+    : reflection;
+  const contextualQuestion = shortReflection
+    ? `Your reflection suggests a working interpretation: “${shortReflection}” What observation would most strongly challenge that interpretation?`
     : questions[0];
 
   return [contextualQuestion, ...questions.filter((q) => q !== contextualQuestion)].slice(0, 3);
@@ -51,7 +54,7 @@ function parseInquiryQuestions(text: string) {
     .map((line) => line.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, "").trim())
     .filter(Boolean);
 
-  if (lines.length >= 2) return lines.slice(0, 3);
+  if (lines.length >= 2) return lines.filter((line) => line.endsWith("?")).slice(0, 3);
 
   const questions = normalized.match(/[^?]+\?/g)?.map((question) => question.trim()) ?? [];
   return questions.slice(0, 3);
@@ -139,8 +142,8 @@ Respond with exactly three concise inquiry questions, one per line. Each questio
       });
 
       const questions = parseInquiryQuestions(response.output_text);
-      if (questions.length === 0) {
-        throw new Error("Inquiry Partner returned no usable questions.");
+      if (questions.length !== 3) {
+        throw new Error("Inquiry Partner did not return exactly three questions.");
       }
 
       return NextResponse.json(inquiryPayload(questions, "live"));
